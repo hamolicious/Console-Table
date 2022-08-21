@@ -1,26 +1,29 @@
-
-from secrets import choice
+# Import package
 from src.cli_table import Table, align_data_left, align_data_center, align_data_right
-from random import randint
-from string import ascii_letters
 
-width = randint(2, 6)
-height = randint(5, 20)
+# Create some data
+data = [
+	['First Name', 'Last Name', 'Grade'],
+	['Roy', 'Trenneman', 5],
+	['Maurice', 'Moss', 1],
+	['Jen', 'Barber', 6],
+	['Douglas', 'Reynholm', 9],
+	['Richmond', 'Avenal', 7],
+]
 
-heading = [[''.join([choice(ascii_letters) for _ in range(3, 10)]) for _ in range(width)]]
-data = [[randint(0, 9999) for _ in range(width)] for _ in range(height)]
-
+# Create the table
 table = Table(
-	heading + data,
-	alignment=align_data_right,
+	data,
+	alignment=align_data_left,
 	header_alignment=align_data_center,
 	header=True,
 )
 
-table.sort_by(heading[0][0])
+# Sort by specific rows
+table.sort_by('Grade')
 
+# Freeze the table
 table.freeze()
+
+# Print the table
 print(table)
-
-
-
