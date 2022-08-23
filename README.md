@@ -80,14 +80,6 @@ Sorts the table by the values of a column
 | `reverse=`          | `bool` | `False` | Reverses the sorting algorithm, asc or desc |
 
 
-### Table().update_data()
-Changes the data that the table has
-
-| Argument            | Type             | Default Value | Description |
-| ------------------- | ---------------- | ------------- |------------ |
-| `data`           | `list[list[Any]]` |  | New data to be used |
-
-
 ### Table().freeze()
 Compiles the given data into a string for quick displaying
 
