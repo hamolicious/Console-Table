@@ -1,16 +1,18 @@
 from types import FunctionType
 from typing import Any
 from .aligners import align_data_center
+from .row import Row
 import colorama
 
 
 class Table:
 	def __init__(self, data: list[list[Any]], **kwargs) -> None:
-		self.update_data(data)
+		self.__data = self.__format_data(data)
+		self.__width = self.__data[0].get_width()
+		self.__height = len(self.__data)
 
 		self.__margin = ' ' * kwargs.get('margin', 1)
 		self.__alignment = kwargs.get('alignment', align_data_center)
-		self.__verify_aligner(self.__alignment)
 		self.__header_alignment = kwargs.get('header_alignment', align_data_center)
 		self.__has_header = kwargs.get('header', False)
 		self.__should_add_top = kwargs.get('add_top', False)
@@ -29,7 +31,37 @@ class Table:
 		self.__lookup = self.__generate_lookup(self.__data)
 		self.__has_header_aligner_used = False
 
+		self.__verify_aligner(self.__alignment)
+		self.__set_aligners(self.__data)
+
 	# Internal
+
+	def __color_all_rows(self, data: list[str]) -> list[str]:
+		"""Colors the entire table
+
+		Args:
+				data (list[str]): rows of the table as strings
+
+		Returns:
+				list[str]: colored rows
+		"""
+		if not self.__use_color:
+			return data
+
+		data = data.copy()
+		new_data = []
+
+		if self.__has_header:
+			new_data.append(
+				self.__color_header_row(data.pop(0))
+			)
+
+		for row_index, row in enumerate(data):
+			new_data.append(
+				self.__color_alternating_row(row, row_index)
+			)
+
+		return new_data
 
 	def __color_row(self, data: str, fg: str, bg: str) -> str:
 		"""Colors a single row
@@ -80,56 +112,11 @@ class Table:
 		else:
 			return self.__color_row(data, self.__odd_row_color_fg, self.__odd_row_color_bg)
 
-	def __color_all_rows(self, data: list[str]) -> list[str]:
-		"""Colors the entire table
-
-		Args:
-				data (list[str]): rows of the table as strings
-
-		Returns:
-				list[str]: colored rows
-		"""
-		if not self.__use_color:
-			return data
-
-		data = data.copy()
-		new_data = []
-
-		if self.__has_header:
-			new_data.append(
-				self.__color_header_row(data.pop(0))
-			)
-
-		for row_index, row in enumerate(data):
-			new_data.append(
-				self.__color_alternating_row(row, row_index)
-			)
-
-		return new_data
-
-	def __stringify(self, data: list[list[Any]]) -> list[list[str]]:
-		"""Casts every element in the table to string
-
-		Args:
-				data (list[list[Any]]): 2d list representing the table
-
-		Returns:
-				list[list[str]]: 2d list where every element is a string
-		"""
-		str_data = []
-
-		for row in data:
-			str_data.append(
-				list(map(str, row))
-			)
-
-		return str_data
-
-	def __get_longest_values(self, data: list[list[str]]) -> list[int]:
+	def __get_longest_values(self, data: list[Row]) -> list[int]:
 		"""Calculates the longest piece of data for each row
 
 		Args:
-				data (list[list[str]]): 2d array representing the table
+				data (list[Row]): array of `Row`s representing the table
 
 		Returns:
 				list[int]: a list of max lengths for each column
@@ -137,13 +124,13 @@ class Table:
 		longest_values = [0 for _ in range(self.__width)]
 
 		for col in range(self.__height):
-			for index, cell in enumerate(data[col]):
+			for index, cell in enumerate(data[col].get_all()):
 				current_value = longest_values[index]
-				longest_values[index] = max(current_value, len(cell))
+				longest_values[index] = max(current_value, cell.get_width())
 
 		return longest_values
 
-	def __generate_lookup(self, data: list[list[Any]]) -> dict|None:
+	def __generate_lookup(self, data: list[Row]) -> dict|None:
 		"""Generates a lookup table where a heading name corresponds to a column index
 
 		Args:
@@ -155,8 +142,8 @@ class Table:
 		if self.__has_header is False: return None
 		lookup = {}
 
-		for index, heading in enumerate(data[0]):
-			lookup[heading] = index
+		for index, cell in enumerate(data[0].get_all()):
+			lookup[cell.get_as_str()] = index
 
 		return lookup
 
@@ -241,6 +228,23 @@ class Table:
 
 		return self.__alignment
 
+	def __format_data(self, new_data: list[list[Any]]) -> list[Row]:
+		data = []
+		for row in new_data:
+			data.append(Row(row))
+		return data
+
+	def __set_aligners(self, data: list[Row]) -> None:
+		"""Sets each cell's alignment function
+
+		Args:
+			data (list[Row]): a list of rows representing the table
+		"""
+		for row in data:
+			for index, cell in enumerate(row.get_all()):
+				aligner = self.__get_aligner(index)
+				cell.set_aligner(aligner)
+
 	# Public
 
 	def is_frozen(self) -> bool:
@@ -275,7 +279,7 @@ class Table:
 		if index is None : raise ValueError(f'Heading "{column}" does not exist')
 
 		if key is None:
-			key = lambda row : row[index]
+			key = lambda row : row.get_at(index).get()
 
 		header = []
 		if self.__has_header:
@@ -286,37 +290,25 @@ class Table:
 		if self.__has_header:
 			self.__data = [header] + self.__data
 
-	def update_data(self, new_data: list[list[Any]]) -> None:
-		"""Changes the data that the table has
-
-		Args:
-				new_data (list[list[Any]]): 2d array representing the table
-		"""
-		self.__data = new_data
-		self.__width = len(self.__data[0])
-		self.__height = len(self.__data)
-		self.__string = ''
-		self.__frozen = False
-		self.__has_header_aligner_used = False
-
 	def freeze(self) -> None:
 		"""Compiles the given data into a string for quick displaying
 		"""
 		if self.__height == 0 : return
-		data = self.__stringify(self.__data)
 
 		rows = []
-		longest_values = self.__get_longest_values(data)
+		longest_values = self.__get_longest_values(self.__data)
 
-		for row in data:
+		for row in self.__data:
 			temp = []
-			for cell_index, cell in enumerate(row):
-				aligned_cell = self.__get_aligner(cell_index)(cell, longest_values[cell_index])
+			for cell_index, cell in enumerate(row.get_all()):
+				aligner = cell.get_aligner()
+				aligned_cell = aligner(cell.get_as_str(), longest_values[cell_index])
+
 				temp.append(
 					f'{self.__margin}{aligned_cell}{self.__margin}'
 				)
+
 			rows.append(f'|{"|".join(temp)}|')
-			alignment = self.__alignment
 
 		colored_rows = self.__color_all_rows(rows)
 		colored_rows = self.__add_top(colored_rows, len(rows[0]))

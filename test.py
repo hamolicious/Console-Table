@@ -17,6 +17,7 @@ table = Table(
 	alignment=[align_data_left, align_data_left, align_data_right],
 	header_alignment=align_data_center,
 	header=True,
+	use_color=True
 )
 
 # Sort by specific rows
