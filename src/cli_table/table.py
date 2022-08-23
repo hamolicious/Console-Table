@@ -197,6 +197,19 @@ class Table:
 		return rows + [self.__color_alternating_row(bottom, len(rows))]
 
 	def __verify_aligner(self, alignment: list[FunctionType]|FunctionType) -> bool:
+		"""Verifies the passed in alignment
+
+		Args:
+			alignment (list[FunctionType] | FunctionType): alignment list of functions or function
+
+		Raises:
+			TypeError: If the list length is not the same as the width of the table
+			TypeError: If the list does not contain functions
+			TypeError: if the argument is not a function
+
+		Returns:
+			bool: True if all is well
+		"""
 		if type(alignment) is list:
 			if len(alignment) != self.__width:
 				raise TypeError('alignment of type list must be of length "len(row)"')
@@ -211,6 +224,14 @@ class Table:
 		return True
 
 	def __get_aligner(self, column_index: int) -> FunctionType:
+		"""Gets the current alignment function
+
+		Args:
+			column_index (int): index into the row
+
+		Returns:
+			FunctionType: alignment function
+		"""
 		if self.__has_header and not self.__has_header_aligner_used:
 			self.__has_header_aligner_used = True
 			return self.__header_alignment
