@@ -13,7 +13,7 @@ class Row:
 	def get_width(self) -> int:
 		return len(self.__data)
 
-	def get_at(self, index: int) -> Any:
+	def get_at(self, index: int) -> Cell:
 		return self.__data[index]
 
 	def get_all(self) -> list[Cell]:

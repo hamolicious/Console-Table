@@ -245,7 +245,21 @@ class Table:
 				aligner = self.__get_aligner(index)
 				cell.set_aligner(aligner)
 
+	def __column_str_or_int_to_index(self, column: str|int) -> int:
+		index = None
+		if type(column) is int : index = column
+		if type(column) is str : index = self.__lookup.get(column)
+
+		if index is None : raise ValueError(f'Heading "{column}" does not exist')
+
+		return index
+
 	# Public
+
+	def set_conditional_formatter_for(self, column: str|int, formatter: FunctionType) -> None:
+		index = self.__column_str_or_int_to_index(column)
+		for row in self.__data:
+			row.get_at(index).set_conditional_formatter(formatter)
 
 	def is_frozen(self) -> bool:
 		"""Checks if the table needs to be frozen before printing
@@ -272,11 +286,7 @@ class Table:
 
 		self.__frozen = False
 
-		index = None
-		if type(column) is int : index = column
-		if type(column) is str : index = self.__lookup.get(column)
-
-		if index is None : raise ValueError(f'Heading "{column}" does not exist')
+		index = self.__column_str_or_int_to_index(column)
 
 		if key is None:
 			key = lambda row : row.get_at(index).get()
@@ -302,7 +312,8 @@ class Table:
 			temp = []
 			for cell_index, cell in enumerate(row.get_all()):
 				aligner = cell.get_aligner()
-				aligned_cell = aligner(cell.get_as_str(), longest_values[cell_index])
+				data = cell.get_as_display_str()
+				aligned_cell = aligner(data, longest_values[cell_index], cell.get_width())
 
 				temp.append(
 					f'{self.__margin}{aligned_cell}{self.__margin}'
