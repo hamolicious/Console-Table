@@ -1,3 +1,4 @@
+from types import FunctionType
 from typing import Any
 from .aligners import align_data_center
 import colorama
@@ -9,6 +10,7 @@ class Table:
 
 		self.__margin = ' ' * kwargs.get('margin', 1)
 		self.__alignment = kwargs.get('alignment', align_data_center)
+		self.__verify_aligner(self.__alignment)
 		self.__header_alignment = kwargs.get('header_alignment', align_data_center)
 		self.__has_header = kwargs.get('header', False)
 		self.__should_add_top = kwargs.get('add_top', False)
@@ -25,6 +27,7 @@ class Table:
 		self.__string = ''
 		self.__frozen = False
 		self.__lookup = self.__generate_lookup(self.__data)
+		self.__has_header_aligner_used = False
 
 	# Internal
 
@@ -193,6 +196,30 @@ class Table:
 		bottom = '-' * width
 		return rows + [self.__color_alternating_row(bottom, len(rows))]
 
+	def __verify_aligner(self, alignment: list[FunctionType]|FunctionType) -> bool:
+		if type(alignment) is list:
+			if len(alignment) != self.__width:
+				raise TypeError('alignment of type list must be of length "len(row)"')
+
+			for elem in alignment:
+				if type(elem) is not FunctionType:
+					raise TypeError('alignment of type list must only contain FunctionType\'s')
+		else:
+			if not (type(alignment) is FunctionType):
+				raise TypeError('alignment not of type list must be a FunctionType')
+
+		return True
+
+	def __get_aligner(self, column_index: int) -> FunctionType:
+		if self.__has_header and not self.__has_header_aligner_used:
+			self.__has_header_aligner_used = True
+			return self.__header_alignment
+
+		if type(self.__alignment) is list:
+			return self.__alignment[column_index]
+
+		return self.__alignment
+
 	# Public
 
 	def is_frozen(self) -> bool:
@@ -249,6 +276,7 @@ class Table:
 		self.__height = len(self.__data)
 		self.__string = ''
 		self.__frozen = False
+		self.__has_header_aligner_used = False
 
 	def freeze(self) -> None:
 		"""Compiles the given data into a string for quick displaying
@@ -259,15 +287,12 @@ class Table:
 		rows = []
 		longest_values = self.__get_longest_values(data)
 
-		alignment = self.__alignment
-		if self.__has_header:
-			alignment = self.__header_alignment
-
 		for row in data:
 			temp = []
 			for cell_index, cell in enumerate(row):
+				aligned_cell = self.__get_aligner(cell_index)(cell, longest_values[cell_index])
 				temp.append(
-					f'{self.__margin}{alignment(cell, longest_values[cell_index])}{self.__margin}'
+					f'{self.__margin}{aligned_cell}{self.__margin}'
 				)
 			rows.append(f'|{"|".join(temp)}|')
 			alignment = self.__alignment

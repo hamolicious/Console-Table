@@ -19,7 +19,7 @@ data = [
 # Create the table
 table = Table(
 	data,
-	alignment=align_data_left,
+	alignment=[align_data_left, align_data_left, align_data_right],
 	header_alignment=align_data_center,
 	header=True,
 )
@@ -37,11 +37,11 @@ print(table)
 Output:
 ```
 | First Name | Last Name | Grade |
-| Maurice    | Moss      | 1     |
-| Roy        | Trenneman | 5     |
-| Jen        | Barber    | 6     |
-| Richmond   | Avenal    | 7     |
-| Douglas    | Reynholm  | 9     |
+| Maurice    | Moss      |     1 |
+| Roy        | Trenneman |     5 |
+| Jen        | Barber    |     6 |
+| Richmond   | Avenal    |     7 |
+| Douglas    | Reynholm  |     9 |
 ```
 
 ## Arguments
@@ -53,8 +53,8 @@ Creates a table object
 | ------------------- | ---------------- | ------------- |------------ |
 | `data`              | `list[list[Any]]` |  | 2D array containing the data to be used |
 | `margin=`           | `int` | `1` | Margin around cells, (how many spaces before and after data) |
-| `alignment=`        | `align_data_left` \| `align_data_center` \| `align_data_right` | `align_data_center` | How to align data |
-| `header_alignment=` | `align_data_left` \| `align_data_center` \| `align_data_right` | `align_data_center` | How to align headers |
+| `alignment=`        | `Function` \| `list[Function]` | How to align data, either per column  (type `list`) or globally (type `Function`) |
+| `header_alignment=` | `Function` | How to align headers |
 | `header=`           | `bool` | `False` | Does the data contain a header (0th row is the header) |
 | `add_top=`          | `bool` | `False` | Add a top border around the table |
 | `add_bottom=`       | `bool` | `False` | Add a bottom border around the table |

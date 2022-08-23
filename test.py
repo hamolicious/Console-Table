@@ -14,7 +14,7 @@ data = [
 # Create the table
 table = Table(
 	data,
-	alignment=align_data_left,
+	alignment=[align_data_left, align_data_left, align_data_right],
 	header_alignment=align_data_center,
 	header=True,
 )
