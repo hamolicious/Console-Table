@@ -1,5 +1,5 @@
 from types import FunctionType
-from typing import Any
+from typing import Any, Callable
 from .aligners import align_data_center
 from .row import Row
 import colorama
@@ -183,11 +183,11 @@ class Table:
 		bottom = '-' * width
 		return rows + [self.__color_alternating_row(bottom, len(rows))]
 
-	def __verify_aligner(self, alignment: list[FunctionType]|FunctionType) -> bool:
+	def __verify_aligner(self, alignment: list[Callable[[str, int, int], str]]|Callable[[str, int, int], str]) -> bool:
 		"""Verifies the passed in alignment
 
 		Args:
-			alignment (list[FunctionType] | FunctionType): alignment list of functions or function
+			alignment (list[ALIGNER_FUNC_TYPE] | ALIGNER_FUNC_TYPE): alignment list of functions or function
 
 		Raises:
 			TypeError: If the list length is not the same as the width of the table
@@ -203,21 +203,21 @@ class Table:
 
 			for elem in alignment:
 				if type(elem) is not FunctionType:
-					raise TypeError('alignment of type list must only contain FunctionType\'s')
+					raise TypeError('alignment of type list must only contain Callable\'s')
 		else:
 			if not (type(alignment) is FunctionType):
-				raise TypeError('alignment not of type list must be a FunctionType')
+				raise TypeError('alignment not of type list must be a Callable')
 
 		return True
 
-	def __get_aligner(self, column_index: int) -> FunctionType:
+	def __get_aligner(self, column_index: int) -> Callable:
 		"""Gets the current alignment function
 
 		Args:
 			column_index (int): index into the row
 
 		Returns:
-			FunctionType: alignment function
+			Callable: alignment function
 		"""
 		if self.__has_header and not self.__has_header_aligner_used:
 			self.__has_header_aligner_used = True
@@ -256,7 +256,7 @@ class Table:
 
 	# Public
 
-	def set_conditional_formatter_for(self, column: str|int, formatter: FunctionType) -> None:
+	def set_conditional_formatter_for(self, column: str|int, formatter: Callable[[Any], str]) -> None:
 		index = self.__column_str_or_int_to_index(column)
 		for row in self.__data:
 			row.get_at(index).set_conditional_formatter(formatter)

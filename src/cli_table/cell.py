@@ -1,7 +1,6 @@
 
 
-from types import FunctionType
-from typing import Any
+from typing import Any, Callable
 from .aligners import align_data_center
 
 class Cell:
@@ -25,12 +24,12 @@ class Cell:
 	def get_width(self) -> int:
 		return len(self.get_as_str())
 
-	def set_conditional_formatter(self, formatter: FunctionType) -> None:
+	def set_conditional_formatter(self, formatter: Callable[[Any], str]) -> None:
 		self.__conditional_formatter = formatter
 
-	def set_aligner(self, aligner: FunctionType) -> None:
+	def set_aligner(self, aligner: Callable[[str, int, int], str]) -> None:
 		self.__aligner = aligner
 
-	def get_aligner(self) -> FunctionType:
+	def get_aligner(self) -> Callable[[str, int, int], str]:
 		return self.__aligner
 
