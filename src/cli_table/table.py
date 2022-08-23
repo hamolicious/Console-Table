@@ -134,7 +134,7 @@ class Table:
 		"""Generates a lookup table where a heading name corresponds to a column index
 
 		Args:
-				data (list[list[Any]]): 2d array representing the table
+				data (list[Row]): array of `Row`s representing the table
 
 		Returns:
 				dict|None: lookup dict where every key is a table heading, none if no heading exists
